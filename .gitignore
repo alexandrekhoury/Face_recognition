@@ -1,0 +1,66 @@
+
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# Python log files
+*.log
+
+# Unit test and coverage reports
+.coverage
+*.cover
+.hypothesis/
+.tox/
+.nox/
+.cache/
+pytest_cache/
+
+# PyInstaller
+*.spec
+
+# MyPy
+.mypy_cache/
+
+# pyenv
+.python-version
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PyCharm IDE files
+.idea/
+
+# VS Code settings
+.vscode/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# PEP 582 support (used by some Python tools)
+__pypackages__/
+
+# Ignore client_data directory (as per your request)
+client_data/
