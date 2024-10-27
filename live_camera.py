@@ -33,8 +33,18 @@ def create_embedding(frame):
 
             # Ensure the detected face meets the minimum size
             if width >= MIN_FACE_SIZE[0] and height >= MIN_FACE_SIZE[1]:
+                
+                if x1 < 0 or y1 < 0 or x2 > frame.shape[1] or y2 > frame.shape[0]:
+                    print("Bounding box is out of image boundaries, skipping...")
+                    continue
+
                 # Extract and resize the face region if needed
                 face = frame[y1:y2, x1:x2]
+                
+                if face.size == 0:
+                    print("Empty face region detected, skipping...")
+                    continue
+
                 face_resized = cv2.resize(face, (160, 160))  # Resize to 160x160, input size expected by FaceNet
 
                 # Convert to tensor and normalize
@@ -73,7 +83,7 @@ def create_embedding(frame):
 conn = sqlite3.connect('clients.db')
 cursor = conn.cursor()
 
-MATCH_THRESHOLD = 0.6 # Facial recognition
+MATCH_THRESHOLD = 0.8 # Facial recognition
 embedding_dir = os.path.join("client_data", "embeddings")
 
 mtcnn = MTCNN(keep_all=True)  # Face detection
