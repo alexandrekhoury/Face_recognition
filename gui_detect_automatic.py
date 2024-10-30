@@ -74,13 +74,11 @@ model = InceptionResnetV1(pretrained='vggface2').eval()
 MIN_FACE_SIZE = (80, 80)
 
 # Tkinter window setup
-
-
 class FaceRecognitionApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Face Recognition")
-        self.root.geometry("2200x1200")  # Expanded window size
+        self.root.geometry("2500x1200")  # Expanded window size
 
         # Frame for video display
         video_frame = tk.Frame(root)
@@ -110,6 +108,11 @@ class FaceRecognitionApp:
         self.quit_button = tk.Button(button_frame, text="Quit", command=root.quit, width=15)
         self.quit_button.grid(row=0, column=2, padx=5)
 
+        # Toggle button for auto-confirm
+        self.auto_confirm_enabled = True  # Default to automatic confirmation enabled
+        self.toggle_auto_confirm_button = tk.Button(button_frame, text="Auto-Confirm ON", command=self.toggle_auto_confirm, width=15)
+        self.toggle_auto_confirm_button.grid(row=0, column=3, padx=5)
+
         # Frame for confirmed clients list
         confirmed_frame = tk.Frame(root)
         confirmed_frame.grid(row=1, column=1, padx=10, pady=10, sticky="n")
@@ -135,6 +138,16 @@ class FaceRecognitionApp:
         self.client_image_path = None
         self.client_name = None
         self.confirmed_clients = set()  # Set to keep track of confirmed clients
+        self.auto_confirm_id = None     # ID for the auto-confirm timer
+
+    def toggle_auto_confirm(self):
+        self.auto_confirm_enabled = not self.auto_confirm_enabled
+        if self.auto_confirm_enabled:
+            self.toggle_auto_confirm_button.config(text="Auto-Confirm ON")
+            print("Automatic confirmation enabled.")
+        else:
+            self.toggle_auto_confirm_button.config(text="Auto-Confirm OFF")
+            print("Automatic confirmation disabled.")
 
     def start_camera(self):
         if not self.running:
@@ -174,6 +187,16 @@ class FaceRecognitionApp:
         if self.cap and self.cap.isOpened():
             ret, frame = self.cap.read()
             if ret:
+                # Face detection logic
+                match_found, client_image_path, client_name, bbox = create_embedding(frame)
+                
+                if bbox:
+                    x1, y1, x2, y2 = bbox
+                    if client_name not in {name for name, _ in self.confirmed_clients}:
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                    else:
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
                 # Display frame
                 frame_display = cv2.resize(frame, (1280, 960))
                 frame_display = cv2.cvtColor(frame_display, cv2.COLOR_BGR2RGB)
@@ -183,25 +206,6 @@ class FaceRecognitionApp:
                 self.video_label.configure(image=imgtk)
 
                 if not self.paused:
-                    # Face detection logic
-                    match_found, client_image_path, client_name, bbox = create_embedding(frame)
-                    
-                    if bbox:
-                        x1,y1,x2,y2 = bbox
-                        if client_name not in {name for name, _ in self.confirmed_clients}:
-                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        else:
-                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-                    # Display frame
-                    frame_display = cv2.resize(frame, (1280, 960))
-                    frame_display = cv2.cvtColor(frame_display, cv2.COLOR_BGR2RGB)
-                    img = Image.fromarray(frame_display)
-                    imgtk = ImageTk.PhotoImage(image=img)
-                    self.video_label.imgtk = imgtk
-                    self.video_label.configure(image=imgtk)
-
-                    
                     if match_found:
                         if client_name not in {name for name, _ in self.confirmed_clients}:
                             self.match_found = True
@@ -254,9 +258,26 @@ class FaceRecognitionApp:
             self.top_image_window.attributes('-topmost', True)
             print("Confirmation window displayed")
 
-    def client_confirmed(self):
+            if self.auto_confirm_enabled:
+                # Start a 3-second timer to auto-confirm if no action is taken
+                self.auto_confirm_id = self.root.after(3000, self.auto_confirm)
+            else:
+                self.auto_confirm_id = None  # No timer when auto-confirm is disabled
+
+    def auto_confirm(self):
+        """Automatically confirm the client if no action is taken within 3 seconds."""
+        print("Auto-confirming client after 3 seconds.")
+        self.client_confirmed(auto=True)
+
+    def client_confirmed(self, auto=False):
+        # Cancel the auto-confirm timer if it's still running
+        if self.auto_confirm_id is not None:
+            self.root.after_cancel(self.auto_confirm_id)
+            self.auto_confirm_id = None
+
         print("Client confirmed")
-        messagebox.showinfo("Client Login", f"{self.client_name} logged in successfully!")
+        if not auto:
+            messagebox.showinfo("Client Login", f"{self.client_name} logged in successfully!")
         # Add the client to the confirmed clients set with a timestamp
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.confirmed_clients.add((self.client_name, timestamp))
@@ -265,6 +286,11 @@ class FaceRecognitionApp:
         self.close_client_window()
 
     def client_cancelled(self):
+        # Cancel the auto-confirm timer if it's still running
+        if self.auto_confirm_id is not None:
+            self.root.after_cancel(self.auto_confirm_id)
+            self.auto_confirm_id = None
+
         print("Client cancelled")
         self.info_label.config(text="Client Information: Not Detected")
         self.close_client_window()
