@@ -13,6 +13,7 @@ def get_client_info(embedding_path):
     result = cursor.fetchone()
     return (result[0], result[1]) if result else (None, None)
 
+
 def create_embedding(frame):
     """Detect faces, create embeddings, and find the most likely match by minimum distance."""
     boxes, _ = mtcnn.detect(frame)
