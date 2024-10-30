@@ -1,93 +1,211 @@
+# Face Recognition System
 
-# Face Recognition and Snapshot System
+This project is a face recognition system that allows you to:
 
-This project is a Python-based face recognition system designed to capture snapshots of clients, confirm their identity, and store their facial embeddings in a database. The project uses `PyQt` or `tkinter` for GUI, `OpenCV` for image processing, and `facenet_pytorch` for face recognition with the FaceNet model. It’s ideal for real-time applications like automated gym check-ins.
+- Register new clients by capturing their facial data.
+- Detect and recognize clients in real-time using a live camera feed.
+- Automatically confirm client identities with the option to toggle between automatic and manual confirmation modes.
 
-## Directory Structure
+The system uses machine learning models for face detection and recognition, providing an interactive GUI for ease of use.
 
-- **`client_data/`**: Contains the subdirectories for saved client images and embeddings.
-  - **`embeddings/`**: Stores numpy files (`.npy`) containing the facial embeddings of each client.
-  - **`images/`**: Stores images (`.jpg`) of each client captured by the system.
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Initializing the System](#initializing-the-system)
+- [Registering New Clients](#registering-new-clients)
+- [Detecting and Recognizing Clients](#detecting-and-recognizing-clients)
+- [Usage Notes](#usage-notes)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-- **`clients.db`**: SQLite database file containing client information, including names, image paths, and embedding paths.
+## Features
 
-- **`face_embeddings/`**: (If applicable) Contains additional embeddings if needed.
+- **Client Registration**: Capture facial data and register new clients into the system using a simple GUI.
+- **Real-time Detection**: Use the live camera feed to detect and recognize clients in real-time.
+- **Automatic Confirmation**: Optionally enable automatic confirmation after a timeout period.
+- **Manual Override**: Manually confirm or cancel client recognition.
+- **Client List Display**: View a list of all recognized clients during a session.
+- **Data Persistence**: Store client data, including embeddings and images, in a structured directory and database.
 
-- **`create_db.py`**: Script for setting up the `clients.db` SQLite database, creating the required tables to store client information.
+## Prerequisites
 
-- **`gui_snapshot.py`**: Main GUI application that captures client snapshots using `PyQt`. Displays the captured image and asks for user confirmation to save or retake the image. Shows the client’s name and saves the image and embedding if confirmed.
+- **Operating System**: Linux, macOS, or Windows.
+- **Python**: Version 3.6 or higher.
+- **Camera**: A webcam or camera device connected to your system.
 
-- **`live_camera.py`**: Script to detect and recognize clients in real-time using the camera feed. It compares each captured face with stored embeddings and notifies if a match is found.
+## Installation
 
-- **`take_snapshot.py`**: Non-GUI script to capture a client’s face, confirm the image with a simple command-line prompt, and save the embedding and image. Useful for environments without GUI support.
-
-- **`README.md`**: This README file that provides an overview and instructions for the project.
-
-## Setup
-
-### 1. Install Dependencies
-
-Ensure you have Python 3.7+ installed. Use the following commands to install the necessary libraries:
+### 1. Clone the Repository
 
 ```bash
-pip install opencv-python-headless facenet-pytorch torch numpy sqlite3 pillow PyQt5
+git clone https://github.com/yourusername/face-recognition-system.git
+cd face-recognition-system
 ```
 
-### 2. Set Up the Database
+### 2. Create a Virtual Environment
 
-Run `create_db.py` to set up the `clients.db` SQLite database with the necessary tables:
+It's recommended to use a virtual environment to manage dependencies.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows, use venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+Install the required Python packages using pip.
+
+```bash
+pip install -r requirements.txt
+```
+
+**Note**: Ensure that you have the required system packages for OpenCV and PyTorch. For example, on Ubuntu:
+
+```bash
+sudo apt-get install libgl1-mesa-glx
+```
+
+## Project Structure
+
+```bash
+.
+├── client_data
+│   ├── embeddings      # Directory for storing client embeddings
+│   └── images          # Directory for storing client images
+├── clients.db          # SQLite database for client information
+├── create_db.py        # Script to initialize the database
+├── gui_detect_automatic.py  # Main application script for detection
+├── gui_take_snapshot.py     # Script for registering new clients
+├── requirements.txt    # List of Python dependencies
+├── README.md           # Project documentation
+└── venv                # Virtual environment directory
+```
+
+## Initializing the System
+
+Before using the system, you need to initialize the database and ensure the required directories are set up.
+
+### 1. Initialize the Database
+
+Run the `create_db.py` script to create the `clients.db` SQLite database.
 
 ```bash
 python create_db.py
 ```
 
-### 3. Run the GUI Application
+This script will create a `clients.db` file with a `clients` table to store client information.
 
-To capture a new client snapshot with a GUI that asks for confirmation before saving, run:
+### 2. Create Necessary Directories
 
-```bash
-python gui_snapshot.py
-```
+Ensure that the following directories exist:
 
-Follow the prompts to enter the client’s name, capture the snapshot, and confirm if you want to save it.
+- `client_data/embeddings`
+- `client_data/images`
 
-### 4. Run Real-Time Face Recognition
+If they do not exist, create them manually or ensure that the scripts can create them automatically.
 
-To detect and recognize faces in real-time, use `live_camera.py`. This script opens a live camera feed and compares detected faces with stored embeddings.
+## Registering New Clients
 
-```bash
-python live_camera.py
-```
+To register new clients, use the `gui_take_snapshot.py` script.
 
-### 5. Command-Line Snapshot Capture
+### Steps:
 
-If you prefer a command-line interface to capture snapshots, use `take_snapshot.py`:
+#### 1. Run the Registration Script
 
 ```bash
-python take_snapshot.py
+python gui_take_snapshot.py
 ```
 
-This script will prompt for the client’s name and ask for confirmation after each capture.
+#### 2. Enter Client's Name
 
-## Usage Overview
+- A dialog will appear asking for the client's name.
+- Enter the full name of the client and press OK.
 
-1. **Capture New Clients**: Use either `gui_snapshot.py` for a GUI-based experience or `take_snapshot.py` for a command-line experience. Both scripts capture and save the client’s image and embedding in `client_data/`.
+#### 3. Capture the Client's Face
 
-2. **Real-Time Recognition**: Use `live_camera.py` to check clients in real-time. The script will detect and match clients with the saved embeddings in `client_data/embeddings`.
+- A window will display the live camera feed with the client's name at the top.
+- Ensure the client's face is clearly visible in the frame.
+- The system will detect the face and draw a rectangle around it.
 
-3. **Database**: All client data, including names, image paths, and embedding paths, are stored in `clients.db`. This allows for easy retrieval and matching.
+#### 4. Confirm the Image
+
+- A confirmation dialog will appear asking if you're satisfied with the captured image.
+  - **Yes**: The system will save the client's image and embedding, and add the client to the database.
+  - **No**: The system will resume the camera feed to retake the image.
+
+#### 5. Success Message
+
+- If confirmed, a success message will appear indicating the client was added successfully.
+
+#### 6. Exit the Application
+
+- After registration, the application will close automatically.
+
+**Note**: Ensure proper lighting and positioning for optimal face detection.
+
+## Detecting and Recognizing Clients
+
+To detect and recognize registered clients, use the `gui_detect_automatic.py` script.
+
+### Steps:
+
+#### 1. Run the Detection Script
+
+```bash
+python gui_detect_automatic.py
+```
+
+#### 2. Start the Camera
+
+- Click on the **Start Camera** button to begin the live feed.
+- The camera feed will appear on the left side of the window.
+
+#### 3. Monitor Client Recognition
+
+- The system will detect faces in real-time.
+- When a registered client is detected:
+  - A rectangle will appear around their face.
+  - The client's name will be displayed.
+  - If **Auto-Confirm** is enabled, the system will automatically confirm the client after 3 seconds unless canceled.
+  - If **Auto-Confirm** is disabled, a confirmation window will appear for manual confirmation.
+
+#### 4. View Confirmed Clients
+
+- The right side of the window displays a list of confirmed clients with timestamps.
+- This list updates as new clients are confirmed.
+
+#### 5. Toggle Auto-Confirm
+
+- Use the **Auto-Confirm ON/OFF** button to enable or disable automatic confirmation.
+  - **Auto-Confirm ON**: Clients are automatically confirmed after a timeout.
+  - **Auto-Confirm OFF**: Manual confirmation is required.
+
+#### 6. Stop the Camera
+
+- Click on the **Stop Camera** button to halt the live feed.
+
+#### 7. Exit the Application
+
+- Click on the **Quit** button to close the application.
+
+## Usage Notes
+
+- **Multiple Clients**: The system can recognize multiple clients in the same session.
+- **Session Persistence**: The list of confirmed clients resets when the application restarts.
+- **Data Storage**: Client images and embeddings are stored in the `client_data` directory, and client information is stored in `clients.db`.
+- **Face Recognition Model**: The system uses the InceptionResnetV1 model pretrained on the VGGFace2 dataset.
 
 ## Troubleshooting
 
-- **Qt Warnings**: If you encounter `QObject::moveToThread` warnings, try setting environment variables to disable specific plugins or use the `opencv-python-headless` package to avoid Qt GUI elements.
+- **Camera Not Opening**: Ensure that your camera device is connected and not being used by another application.
+- **Face Not Detected**: Check lighting conditions and make sure the face is within the camera frame.
+- **Dependencies Issues**: Verify that all dependencies are installed correctly, especially PyTorch and OpenCV.
+- **Database Errors**: Ensure the `clients.db` file exists and the database schema is initialized.
 
-- **Cannot Find Qt Plugins**: Set `QT_PLUGIN_PATH` or install `libxcb-xinerama0` if you encounter `xcb` plugin issues on Linux.
+## License
 
-- **GUI Issues**: If the GUI fails to start or you receive "Could not load Qt platform plugin," consider reinstalling `PyQt5` or using `tkinter` as a simpler GUI option.
+This project is licensed under the MIT License.
 
-## Future Improvements
-
-- **Add Client Management**: Add features to update or delete client data from the database.
-- **Advanced Matching**: Improve face matching algorithms or adjust thresholds for better accuracy in different lighting conditions.
-- **Enhanced GUI**: Add more controls and customization to the GUI for a better user experience.
-
+**Disclaimer**: This system is intended for educational purposes. Ensure compliance with privacy laws and regulations when collecting and processing biometric data.
